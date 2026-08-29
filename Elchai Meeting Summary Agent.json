@@ -1,0 +1,282 @@
+{
+  "name": "Elchai Meeting Summary Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meeting-summary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "702e158f-4308-4913-bb0d-e3b0c4aa4cec",
+      "name": "Webhook",
+      "webhookId": "69ca91dc-59b5-4c7a-8710-cf237c743c83"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a525093c-5eff-4192-abcd-f0548fa57936",
+              "leftValue": "={{ $json.body.type }}",
+              "rightValue": "audio",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "ddc36768-fe17-4bcb-8a49-6cc86dc556d0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer  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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "parameterType": "=formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "b84df998-a0bf-433d-a9f9-0ca15742fd86",
+      "name": "Whisper Transcription"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "4094f6ec-9be2-4a30-b4c8-296d3c873715",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.organiser_email }}",
+        "subject": "=[PENDING REVIEW] Meeting Summary — {{ $json.body.meeting_title }}",
+        "message": "=Hi,<br><br> A new meeting summary is ready for your review.<br><br> <b>Summary:</b><br> {{ $json.choices[0].message.content }}<br><br> Please review the above and reply to approve or edit.<br><br> Thank you.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        -128
+      ],
+      "id": "e2a02440-d97b-4a17-bada-7c89c66c193a",
+      "name": "Send a message",
+      "webhookId": "24657aab-7c15-48a7-b693-1405f7185c8a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "m2fgYIb1EQsnKo4F",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "approve-meeting",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        96
+      ],
+      "id": "543127d3-df4b-4a1c-8ca6-558057379ad9",
+      "name": "Webhook1",
+      "webhookId": "815035b4-98be-4207-bcbf-a6b92158114f"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.participants }}",
+        "subject": "Meeting Summary — Approved",
+        "message": "=Hi,<br><br>Please find below the approved meeting summary.<br><br><b>Summary:</b><br>{{ $json.body.summary }}<br><br>Thank you.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "6b8cdcee-d6de-4ed1-a02c-5060c5824636",
+      "name": "Send a message1",
+      "webhookId": "ce77ae56-8756-46df-bc88-588639d4cf9a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "m2fgYIb1EQsnKo4F",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/gpt-oss-20b\",\n  \"max_tokens\": 1000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Summarise this transcript and return JSON with: meeting_title, date, participants, summary, action_items, key_decisions, risk_flags.\\n\\nTranscript: {{ $json.body.transcript }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        80
+      ],
+      "id": "786e9a9c-45e5-493b-9d4b-9f183809001c",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Whisper Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper Transcription": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5f938d89-9ab1-4954-b6da-55a13ae9c7f7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "acbd824ebb2673c9bd99f76f794f6c2b89cf253d730b18863324f78e56808094"
+  },
+  "nodeGroups": [],
+  "id": "CInJX1rgkjw09nFI",
+  "tags": []
+}
